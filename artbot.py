@@ -34,9 +34,16 @@ async def submit(ctx):
     members = pickle.load(infile)
     infile.close()
     author = ctx.author.name
+    if not ('reset' in members):
+        members['reset'] = True
     if datetime.datetime.today().weekday() == 0:
-        for key in members:
-            members[key] = 0
+        if members['reset']:
+            for key in members:
+                members[key] = 0
+            members['reset'] = False
+    else:
+        members['reset'] = True
+    
     members[author] += 1
     
     response = "Thanks " + author + "!"
@@ -53,7 +60,7 @@ async def submit(ctx):
     await ctx.send(response)
 
 @bot.command(name='set')
-async def set(ctx, number):
+async def set(ctx, number:int):
     infile = open(filename,'rb')
     members = pickle.load(infile)
     infile.close()
