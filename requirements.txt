@@ -1,0 +1,7 @@
+discord
+psycopg2
+loguru
+dotenv
+dj_database_url
+pandas
+tabulate
