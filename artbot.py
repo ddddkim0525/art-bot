@@ -1,74 +1,45 @@
-# bot.py
 import os
-import pickle
-import datetime
 from dotenv import load_dotenv
-
-# 1
-import discord
 from discord.ext import commands
+from db import Database
+from loguru import logger
+from tabulate import tabulate
+
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
+db = Database()
 
-# 2
-intents = discord.Intents().default()
-intents.members = True
-bot = commands.Bot(command_prefix='!', intents=intents)
-filename = 'records'
+bot = commands.Bot(command_prefix='!')
 
-@bot.command(name='setup')
-async def scan(ctx):
-    outfile = open(filename,'wb')
-    members = {}
-    for member in ctx.guild.members:
-        members[member.name] = 0
-        print(member.name)
-    pickle.dump(members,outfile)
-    outfile.close()
-    await ctx.send("Setup Complete")
 
 @bot.command(name='submit')
 async def submit(ctx):
-    infile = open(filename,'rb')
-    members = pickle.load(infile)
-    infile.close()
+    """Create new submission entry for message author in database"""
     author = ctx.author.name
-    if not ('reset' in members):
-        members['reset'] = True
-    if datetime.datetime.today().weekday() == 0:
-        if members['reset']:
-            for key in members:
-                members[key] = 0
-            members['reset'] = False
-    else:
-        members['reset'] = True
-    
-    members[author] += 1
-    
-    response = "Thanks " + author + "!"
-    submit_count = members[author]
-    response += f'\nSubmit Count: {submit_count}/6'
-    if submit_count == 6:
-        response += '\nCongratulations for another week of daily submissions!'
-    elif submit_count > 6:
-        response += '\nYou already satisfied the quota, but great job working on anyways!'
-    outfile = open(filename,'wb')
-    pickle.dump(members,outfile)
-    outfile.close()
+    message = ctx.message
 
+    db.add_submission(author)
+    try:
+        img_url = message.attachments[0].url
+        logger.debug(f"Image URL from message: {img_url}")
+    except IndexError:
+        logger.debug(f"No image in message")
+
+    response = f"Submitted ({db.get_weekly_user_count(author)}/6)"
+    logger.info(f"Responding: {response}")
     await ctx.send(response)
 
-@bot.command(name='set')
-async def set(ctx, number:int):
-    infile = open(filename,'rb')
-    members = pickle.load(infile)
-    infile.close()
-    author = ctx.author.name
-    members[author] = number
-    outfile = open(filename,'wb')
-    pickle.dump(members,outfile)
-    outfile.close()
 
-    await ctx.send(f'Set {author} count to {number}')
-bot.run(TOKEN)
+@bot.command(name='summary')
+async def summary(ctx):
+    """Print the weekly submission count of all participants."""
+    df = db.get_weekly_summary()
+    response = tabulate(df, tablefmt='psql', showindex=False)
+    response = "```\nWeekly Summary\n" + response + "\n```"
+    logger.info(f"Responding:\n{response}")
+    await ctx.send(response)
+
+
+if __name__ == '__main__':
+    bot.run(TOKEN)
