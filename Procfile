@@ -1,1 +1,1 @@
-worker:python artbot.py
+worker: python artbot.py
