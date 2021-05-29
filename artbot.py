@@ -41,5 +41,5 @@ async def summary(ctx):
     await ctx.send(response)
 
 
-
-bot.run(TOKEN)
+if __name__ == "__main__":
+    bot.run(TOKEN)
