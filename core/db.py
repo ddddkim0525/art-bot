@@ -4,7 +4,7 @@ import dj_database_url
 import dotenv
 import pandas as pd
 
-from utils import monday
+from .utils import monday
 
 
 class Database:
