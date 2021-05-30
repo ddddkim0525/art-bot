@@ -3,13 +3,8 @@ from loguru import logger
 import dj_database_url
 import dotenv
 import pandas as pd
-from datetime import datetime, timedelta
 
-
-def monday():
-    now = datetime.now()
-    monday = now - timedelta(days=now.weekday())
-    return monday.strftime("%Y-%m-%d")
+from utils import monday
 
 
 class Database:
