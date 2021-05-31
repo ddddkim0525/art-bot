@@ -1,5 +1,6 @@
 discord
-psycopg2
+psycopg2; sys_platform != "darwin"
+psycopg2-binary; sys_platform == "darwin"
 loguru
 python-dotenv
 dj_database_url
